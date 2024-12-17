@@ -9,26 +9,46 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-22.04
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+    
+    permissions:
+       id-token: write
+       contents: read
+      
     steps:
-      - uses: actions/checkout@v4
-        with:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
           submodules: true 
-          fetch-depth: 0    
-
-      - name: Setup Hugo
-        uses: peaceiris/actions-hugo@v3
-        with:
+          fetch-depth: 0 
+          
+    - name: Setup Hugo
+      uses: peaceiris/actions-hugo@v3
+      with:
           hugo-version: 'latest'
           extended: true
 
-      - name: Build
-        run: hugo --minify
+    - name: Build
+      run: hugo --minify
+        
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with: 
+          name: tech-blog
+          path: public/*
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+         audience: sts.amazonaws.com.cn
+         aws-region: eu-west-1
+         role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+
+
+    - name: Sync blog content to S3 bucket 
+      run: |
+         aws s3 sync ./public/ s3://${{ secrets.S3_BUCKET }} --delete
+
+    - name: create cloudfront invalidation
+      run: |
+         aws cloudfront create-invalidation \
+         --distribution-id ${{ secrets.DISTRIBUTION_ID }} \ --paths "/*"
