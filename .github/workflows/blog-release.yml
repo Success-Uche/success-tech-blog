@@ -33,11 +33,6 @@ jobs:
     - name: Build
       run: hugo --minify
         
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4
-      with: 
-          name: tech-blog
-          path: public/*
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
