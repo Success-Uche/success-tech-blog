@@ -44,7 +44,8 @@ jobs:
 
     - name: Sync blog content to S3 bucket 
       run: |
-         aws s3 sync public/ s3://${{ secrets.BUCKET_NAME }} 
+         aws s3 sync public/ s3://${{ secrets.BUCKET_NAME }} \
+         --delete
 
     - name: create cloudfront invalidation to clear cache
       run: |
