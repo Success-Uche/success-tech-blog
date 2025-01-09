@@ -1,4 +1,4 @@
-# This job runs our automated build process
+# This Job automates infrastructure provisioning with Terraform in CI workflow
 
 name: Blog Release to AWS
 
