@@ -30,7 +30,8 @@ ehthumbs.db
 *.bak
 *.old
 
-# Terraform files to ignore
+@"
+# Terraform directories and files
 **/.terraform/*
 *.tfstate
 *.tfstate.*
@@ -43,3 +44,7 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+
+# Explicitly exclude provider binaries
+**/terraform-provider-aws*.exe
+"@ | Out-File -FilePath ".gitignore" -Encoding UTF8 -Force
