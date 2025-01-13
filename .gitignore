@@ -29,3 +29,22 @@ ehthumbs.db
 # Other
 *.bak
 *.old
+
+@"
+# Terraform directories and files
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Explicitly exclude provider binaries
+**/terraform-provider-aws*.exe
+"@ | Out-File -FilePath ".gitignore" -Encoding UTF8 -Force

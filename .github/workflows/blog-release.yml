@@ -1,60 +1,121 @@
-# This job runs our automated buid process
+# This Job automates infrastructure provisioning with Terraform in CI workflow
 
-name: Release
+name: Blog Release to AWS
 
 on:
   push:
     branches:
-      - main  
-  pull_request:
+      - main
   workflow_dispatch:
 
+permissions:
+  id-token: write  # This is required for requesting the JWT
+  contents: read   # This is required for actions/checkout
+
+env:
+  AWS_REGION : "eu-west-1"    # AWS region where s3 bucket is deployed
+
 jobs:
-  deploy:
+  Infra_job:
+    name: AWS Infrastructure Provisioning with Terraform
     runs-on: ubuntu-22.04
-    
-    permissions:
-       id-token: write
-       contents: read
-      
+    defaults:
+      run:
+        working-directory: terraform
+
+    outputs:
+      s3_bucket: ${{ steps.tf_out.outputs.s3 }}
+      cf_id: ${{ steps.tf_out.outputs.cfid }}
+      cf_domain_name: ${{ steps.tf_out.outputs.cfdomain }}
+
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-      with:
-          submodules: true 
-          fetch-depth: 0 
-          
-    - name: Setup Hugo
-      uses: peaceiris/actions-hugo@v3
-      with:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Terraform Workflow
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.10.3"
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: true
+
+      - name: Terraform Apply
+        id: Apply
+        run: terraform apply -auto-approve
+
+      - name: Terraform Output
+        id: tf_out
+        run: |
+          echo "s3=$(terraform output s3_bucket | tr -d '""')" >> "$GITHUB_OUTPUT"
+          echo "cfid=$(terraform output cloudFront_ID | tr -d '""')" >> "$GITHUB_OUTPUT"
+          echo "domain=$(terraform output cloudFront_domain_name | tr -d '""')" >> "$GITHUB_OUTPUT"
+
+  build_job:
+    name: Build
+    needs: [Infra_job]
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
           hugo-version: 'latest'
           extended: true
 
-    - name: Build
-      run: hugo --minify
+      - name: Build
+        run: hugo --minify
 
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4
-      with: 
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
           name: tech-blog
-          path: public/*   
+          path: public/*
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-         audience: sts.amazonaws.com
-         aws-region: eu-west-1
-         role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+  deploy_job:
+    name: Publish
+    needs: [build_job, Infra_job]
+    runs-on: ubuntu-22.04
+    env:
+      S3_BUCKET: ${{ needs.Infra_job.outputs.s3_bucket }}
+      DISTRIBUTION_ID: ${{ needs.Infra_job.outputs.cf_id }}
 
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: tech-blog
 
-    - name: Sync blog content to S3 bucket 
-      run: |
-         aws s3 sync public/ s3://${{ secrets.BUCKET_NAME }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          audience: sts.amazonaws.com
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
 
+      - name: Sync blog content to S3 bucket
+        run: |
+          aws s3 sync public/ s3://${{ secrets.BUCKET_NAME }}
 
-    - name: create cloudfront invalidation to clear cache
-      run: |
-       aws cloudfront create-invalidation \
-       --distribution-id ${{ secrets.DISTRIBUTION_ID }} \
-       --paths "/*"
-
+      - name: Create CloudFront Invalidation to Clear Cache
+        run: |
+          aws cloudfront create-invalidation \
+          --distribution-id ${{ secrets.DISTRIBUTION_ID }} \
+          --paths "/*"
