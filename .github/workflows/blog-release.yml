@@ -9,11 +9,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write  # This is required for requesting the JWT
-  contents: read   # This is required for actions/checkout
+  id-token: write
+  contents: read
 
 env:
-  AWS_REGION : "eu-west-1"    # AWS region where s3 bucket is deployed
+  AWS_REGION: "eu-west-1"
 
 jobs:
   Infra_job:
@@ -22,7 +22,6 @@ jobs:
     defaults:
       run:
         working-directory: terraform
-
     outputs:
       s3_bucket: ${{ steps.tf_out.outputs.s3 }}
       cf_id: ${{ steps.tf_out.outputs.cfid }}
@@ -37,6 +36,7 @@ jobs:
         with:
           terraform_version: "1.10.3"
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
 
       - name: Terraform Init
         id: init
@@ -66,7 +66,6 @@ jobs:
     name: Build
     needs: [Infra_job]
     runs-on: ubuntu-22.04
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -96,7 +95,6 @@ jobs:
     env:
       S3_BUCKET: ${{ needs.Infra_job.outputs.s3_bucket }}
       DISTRIBUTION_ID: ${{ needs.Infra_job.outputs.cf_id }}
-
     steps:
       - name: Download Build Artifacts
         uses: actions/download-artifact@v4
@@ -112,10 +110,10 @@ jobs:
 
       - name: Sync blog content to S3 bucket
         run: |
-          aws s3 sync public/ s3://${{ secrets.BUCKET_NAME }}
+          aws s3 sync . s3://${{ env.S3_BUCKET }} --delete
 
-      - name: Create CloudFront Invalidation to Clear Cache
+      - name: Create CloudFront Invalidation
         run: |
           aws cloudfront create-invalidation \
-          --distribution-id ${{ secrets.DISTRIBUTION_ID }} \
+          --distribution-id ${{ env.DISTRIBUTION_ID }} \
           --paths "/*"
