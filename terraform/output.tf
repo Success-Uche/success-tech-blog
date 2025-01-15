@@ -1,5 +1,5 @@
-output "s3_bucket_name" {
-  description = "The unique identifier (name) of the S3 bucket"
+output "s3_bucket" {
+  description = "The S3 bucket name for GitHub Actions workflow"
   value       = aws_s3_bucket.my-blog.id
 }
 
@@ -8,13 +8,13 @@ output "s3_bucket_domain_name" {
   value       = aws_s3_bucket.my-blog.bucket_regional_domain_name
 }
 
-output "cloudfront_distribution_id" {
-  description = "The ID of the CloudFront distribution for content delivery"
+output "cloudFront_ID" {
+  description = "The CloudFront distribution ID for GitHub Actions workflow"
   value       = aws_cloudfront_distribution.s3_distribution.id
 }
 
-output "cloudfront_distribution_domain_name" {
-  description = "The domain name of the CloudFront distribution"
+output "cloudFront_domain_name" {
+  description = "The CloudFront domain name for GitHub Actions workflow"
   value       = aws_cloudfront_distribution.s3_distribution.domain_name
 }
 
