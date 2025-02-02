@@ -1,6 +1,6 @@
 resource "aws_acm_certificate" "acm_certificate" {
   provider          = aws.secondary
-  domain_name       = "example.com"
+  domain_name       = "successtech.cloudtalents.io"
   validation_method = "DNS"
 
   lifecycle {

@@ -1,5 +1,3 @@
-
-
 # Define CloudFront Origin Access Control (OAC) for secure S3 access
 resource "aws_cloudfront_origin_access_control" "default" {
   name                              = "${var.bucket_name}-OAC"
@@ -21,12 +19,19 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   comment             = "CloudFront distribution for S3 bucket"
   default_root_object = "index.html"
 
-  # Custom domain names (aliases)
-  aliases = var.cloudfront_aliases
+  # Add custom domain
+  aliases = ["successtech.cloudtalent.io"]
+
+  # Attach ACM certificate
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate.acm_certificate.arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
 
   # Default cache behavior
   default_cache_behavior {
-    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = local.s3_origin_id
 
@@ -38,55 +43,10 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       }
     }
 
-    viewer_protocol_policy = "allow-all"
+    viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
-  }
-
-  # Ordered cache behavior for immutable content
-  ordered_cache_behavior {
-    path_pattern     = "/content/immutable/*"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = local.s3_origin_id
-
-    forwarded_values {
-      query_string = false
-      headers      = ["Origin"]
-
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl                = 0
-    default_ttl            = 86400
-    max_ttl                = 31536000
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-  }
-
-  # Ordered cache behavior for general content
-  ordered_cache_behavior {
-    path_pattern     = "/content/*"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.s3_origin_id
-
-    forwarded_values {
-      query_string = false
-
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
   }
 
   # Geo-restrictions (optional)
@@ -95,20 +55,13 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       restriction_type = "none"
     }
   }
-
-  # SSL/TLS settings
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
 }
-
 
 # S3 Bucket Policy to Allow CloudFront Access
 resource "aws_s3_bucket_policy" "CF_S3_Policy" {
   bucket = aws_s3_bucket.my-blog.id
   policy = jsonencode({
-    Version = "2008-10-17"
-    Id      = "PolicyForCloudFrontPrivateContent"
+    Version = "2012-10-17"
     Statement = [
       {
         Sid    = "AllowCloudFrontServicePrincipal"
@@ -117,7 +70,7 @@ resource "aws_s3_bucket_policy" "CF_S3_Policy" {
           Service = "cloudfront.amazonaws.com"
         }
         Action   = "s3:GetObject"
-        Resource = "arn:aws:s3:::${aws_s3_bucket.my-blog.id}/*"
+        Resource = "arn:aws:s3:::${aws_s3_bucket.my-blog.bucket}/*"
         Condition = {
           StringEquals = {
             "AWS:SourceArn" = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.s3_distribution.id}"
