@@ -22,12 +22,11 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   # Add custom domain
   aliases = ["successtech.cloudtalent.io"]
 
-  # Attach ACM certificate
-  viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate.acm_certificate.arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
-  }
+ viewer_certificate {
+  acm_certificate_arn      = "arn:aws:acm:eu-west-1:605134442315:certificate/fc571127-3c32-4598-b950-7c93c967e88f"
+  ssl_support_method       = "sni-only"
+  minimum_protocol_version = "TLSv1.2_2021"
+}
 
     # Default cache behavior
   default_cache_behavior {
