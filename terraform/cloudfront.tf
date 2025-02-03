@@ -23,7 +23,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   aliases = ["successtech.cloudtalent.io"]
 
  viewer_certificate {
-  acm_certificate_arn      = "arn:aws:acm:eu-west-1:605134442315:certificate/fc571127-3c32-4598-b950-7c93c967e88f"
+  acm_certificate_arn      = "arn:aws:acm:us-east-1:605134442315:certificate/dc7e0afe-8a5f-4369-a752-cd5d69c8b8c4"
   ssl_support_method       = "sni-only"
   minimum_protocol_version = "TLSv1.2_2021"
 }
