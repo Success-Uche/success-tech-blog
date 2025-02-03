@@ -20,7 +20,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   default_root_object = "index.html"
 
   # Add custom domain
-  aliases = ["successtech.cloudtalent.io"]
+  aliases = ["successtech.cloudtalents.io"]
 
  viewer_certificate {
   acm_certificate_arn      = "arn:aws:acm:us-east-1:605134442315:certificate/dc7e0afe-8a5f-4369-a752-cd5d69c8b8c4"
