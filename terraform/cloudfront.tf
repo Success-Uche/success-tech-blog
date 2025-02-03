@@ -29,11 +29,12 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     minimum_protocol_version = "TLSv1.2_2021"
   }
 
-  # Default cache behavior
+    # Default cache behavior
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "DELETE"]  # Fully valid
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = local.s3_origin_id
+
 
     forwarded_values {
       query_string = false
