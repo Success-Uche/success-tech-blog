@@ -1,3 +1,29 @@
+#Cloudfront Funtion to Append Index.html to URLs
+resource "aws_cloudfront_function" "append_index_html" {
+  name    = "${var.bucket_name}-append-index"
+  runtime = "cloudfront-js-2.0"
+  comment = "Appends index.html to URLs"
+
+  publish = true
+  code    = <<EOT
+async function handler(event) {
+    var request = event.request;
+    var uri = request.uri;
+    
+    // Check whether the URI is missing a file name.
+    if (uri.endsWith('/')) {
+        request.uri += 'index.html';
+    } 
+    // Check whether the URI is missing a file extension.
+    else if (!uri.includes('.')) {
+        request.uri += '/index.html';
+    }
+
+    return request;
+}
+EOT
+}
+
 # Define CloudFront Origin Access Control (OAC) for secure S3 access
 resource "aws_cloudfront_origin_access_control" "default" {
   name                              = "${var.bucket_name}-OAC"
@@ -9,7 +35,7 @@ resource "aws_cloudfront_origin_access_control" "default" {
 
 # Define CloudFront Distribution
 resource "aws_cloudfront_distribution" "s3_distribution" {
-  origin {
+ origin {
     domain_name              = aws_s3_bucket.my-blog.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.default.id
     origin_id                = local.s3_origin_id
@@ -22,18 +48,22 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   # Add custom domain
   aliases = ["successtech.cloudtalents.io"]
 
- viewer_certificate {
+  viewer_certificate {
   acm_certificate_arn      = "arn:aws:acm:us-east-1:605134442315:certificate/dc7e0afe-8a5f-4369-a752-cd5d69c8b8c4"
   ssl_support_method       = "sni-only"
   minimum_protocol_version = "TLSv1.2_2021"
 }
 
-    # Default cache behavior
+  # Default Cache behavior
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "DELETE"]  # Fully valid
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = local.s3_origin_id
 
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.append_index_html.arn
+    }
 
     forwarded_values {
       query_string = false
