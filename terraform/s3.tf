@@ -22,20 +22,3 @@ resource "aws_s3_bucket_website_configuration" "my-blog" {
     key = "error.html"
   }
 }
-
-# Bucket policy remains the same
-resource "aws_s3_bucket_policy" "public_access" {
-  bucket = aws_s3_bucket.my-blog.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.my-blog.arn}/*"
-      }
-    ]
-  })
-}
