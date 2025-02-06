@@ -2,7 +2,8 @@ locals {
   # Unique origin ID for S3 bucket
   s3_origin_id = "${var.bucket_name}-origin"
 
-  # Static website endpoint for the S3 bucket
-  s3_domain_name = "${var.bucket_name}.s3-website-${var.region}.amazonaws.com"
+  # Use the S3 bucket's regional domain name (CloudFront compatible)
+  s3_domain_name = aws_s3_bucket.my-blog.bucket_regional_domain_name
 }
+
 
