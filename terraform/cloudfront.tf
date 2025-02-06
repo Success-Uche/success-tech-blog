@@ -3,25 +3,8 @@ resource "aws_cloudfront_function" "append_index_html" {
   name    = "${var.bucket_name}-append-index"
   runtime = "cloudfront-js-2.0"
   comment = "Appends index.html to URLs"
-
   publish = true
-  code    = <<EOT
-async function handler(event) {
-    var request = event.request;
-    var uri = request.uri;
-    
-    // Check whether the URI is missing a file name.
-    if (uri.endsWith('/')) {
-        request.uri += 'index.html';
-    } 
-    // Check whether the URI is missing a file extension.
-    else if (!uri.includes('.')) {
-        request.uri += '/index.html';
-    }
-
-    return request;
-}
-EOT
+  code    = file("functions/append-index-html.js")
 }
 
 # Define CloudFront Origin Access Control (OAC) for secure S3 access
@@ -59,6 +42,9 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "DELETE"]  # Fully valid
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = local.s3_origin_id
+
+    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"  # AWS Managed Caching Policy
+    compress                   = true
 
     function_association {
       event_type   = "viewer-request"

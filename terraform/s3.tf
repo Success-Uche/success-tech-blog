@@ -9,16 +9,3 @@ resource "aws_s3_bucket" "my-blog" {
     Project     = "Blog Hosting"
   }
 }
-
-# Website configuration (separated as recommended)
-resource "aws_s3_bucket_website_configuration" "my-blog" {
-  bucket = aws_s3_bucket.my-blog.id
-
-  index_document {
-    suffix = "index.html"
-  }
-
-  error_document {
-    key = "error.html"
-  }
-}
