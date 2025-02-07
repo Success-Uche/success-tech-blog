@@ -1,4 +1,11 @@
-
+#Cloudfront Funtion to Append Index.html to URLs
+resource "aws_cloudfront_function" "append_index_html" {
+  name    = "${var.bucket_name}-append-index"
+  runtime = "cloudfront-js-2.0"
+  comment = "Appends index.html to URLs"
+  publish = true
+  code    = file("functions/append-index-html.js")
+}
 
 # Define CloudFront Origin Access Control (OAC) for secure S3 access
 resource "aws_cloudfront_origin_access_control" "default" {
@@ -11,7 +18,7 @@ resource "aws_cloudfront_origin_access_control" "default" {
 
 # Define CloudFront Distribution
 resource "aws_cloudfront_distribution" "s3_distribution" {
-  origin {
+ origin {
     domain_name              = aws_s3_bucket.my-blog.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.default.id
     origin_id                = local.s3_origin_id
@@ -21,72 +28,33 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   comment             = "CloudFront distribution for S3 bucket"
   default_root_object = "index.html"
 
-  # Custom domain names (aliases)
-  aliases = var.cloudfront_aliases
+  # Add custom domain
+  aliases = ["successtech.cloudtalents.io"]
 
-  # Default cache behavior
+  viewer_certificate {
+  acm_certificate_arn      = "arn:aws:acm:us-east-1:605134442315:certificate/dc7e0afe-8a5f-4369-a752-cd5d69c8b8c4"
+  ssl_support_method       = "sni-only"
+  minimum_protocol_version = "TLSv1.2_2021"
+}
+
+  # Default Cache behavior
   default_cache_behavior {
-    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "DELETE"]  # Fully valid
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = local.s3_origin_id
 
-    forwarded_values {
-      query_string = false
+    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"  # AWS Managed Caching Policy
+    compress                   = true
 
-      cookies {
-        forward = "none"
-      }
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.append_index_html.arn
     }
 
-    viewer_protocol_policy = "allow-all"
+    viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
-  }
-
-  # Ordered cache behavior for immutable content
-  ordered_cache_behavior {
-    path_pattern     = "/content/immutable/*"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = local.s3_origin_id
-
-    forwarded_values {
-      query_string = false
-      headers      = ["Origin"]
-
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl                = 0
-    default_ttl            = 86400
-    max_ttl                = 31536000
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
-  }
-
-  # Ordered cache behavior for general content
-  ordered_cache_behavior {
-    path_pattern     = "/content/*"
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = local.s3_origin_id
-
-    forwarded_values {
-      query_string = false
-
-      cookies {
-        forward = "none"
-      }
-    }
-
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
-    compress               = true
-    viewer_protocol_policy = "redirect-to-https"
   }
 
   # Geo-restrictions (optional)
@@ -95,20 +63,13 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       restriction_type = "none"
     }
   }
-
-  # SSL/TLS settings
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
 }
-
 
 # S3 Bucket Policy to Allow CloudFront Access
 resource "aws_s3_bucket_policy" "CF_S3_Policy" {
   bucket = aws_s3_bucket.my-blog.id
   policy = jsonencode({
-    Version = "2008-10-17"
-    Id      = "PolicyForCloudFrontPrivateContent"
+    Version = "2012-10-17"
     Statement = [
       {
         Sid    = "AllowCloudFrontServicePrincipal"
@@ -117,7 +78,7 @@ resource "aws_s3_bucket_policy" "CF_S3_Policy" {
           Service = "cloudfront.amazonaws.com"
         }
         Action   = "s3:GetObject"
-        Resource = "arn:aws:s3:::${aws_s3_bucket.my-blog.id}/*"
+        Resource = "arn:aws:s3:::${aws_s3_bucket.my-blog.bucket}/*"
         Condition = {
           StringEquals = {
             "AWS:SourceArn" = "arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/${aws_cloudfront_distribution.s3_distribution.id}"
