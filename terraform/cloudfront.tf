@@ -18,7 +18,7 @@ resource "aws_cloudfront_origin_access_control" "default" {
 
 # Define CloudFront Distribution
 resource "aws_cloudfront_distribution" "s3_distribution" {
- origin {
+  origin {
     domain_name              = aws_s3_bucket.my-blog.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.default.id
     origin_id                = local.s3_origin_id
@@ -31,47 +31,46 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   # Add custom domain
   aliases = ["successtech.cloudtalents.io"]
 
+  custom_error_response {
+    error_code            = 403
+    response_page_path    = "/404.html"
+    response_code         = 404
+    error_caching_min_ttl = 10
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_page_path    = "/404.html"
+    response_code         = 404
+    error_caching_min_ttl = 10
+  }
+
+  custom_error_response {
+    error_code            = 500
+    response_page_path    = "/404.html"
+    response_code         = 500
+    error_caching_min_ttl = 10
+  }
+
   viewer_certificate {
-  acm_certificate_arn      = "arn:aws:acm:us-east-1:605134442315:certificate/dc7e0afe-8a5f-4369-a752-cd5d69c8b8c4"
-  ssl_support_method       = "sni-only"
-  minimum_protocol_version = "TLSv1.2_2021"
-}
+    acm_certificate_arn      = "arn:aws:acm:us-east-1:605134442315:certificate/dc7e0afe-8a5f-4369-a752-cd5d69c8b8c4"
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
 
   # Default Cache behavior
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "DELETE"]  # Fully valid
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT", "DELETE"] # Fully valid
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = local.s3_origin_id
 
-    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"  # AWS Managed Caching Policy
-    compress                   = true
+    cache_policy_id = "658327ea-f89d-4fab-a63d-7e88639e58f6" # AWS Managed Caching Policy
+    compress        = true
 
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.append_index_html.arn
     }
-
-  custom_error_response {
-    error_code         = 403
-    response_page_path = "/404.html"
-    response_code      = 404
-    error_caching_min_ttl = 10
-  }
-
-  custom_error_response {
-    error_code         = 404
-    response_page_path = "/404.html"
-    response_code      = 404
-    error_caching_min_ttl = 10
-  }
-
-  custom_error_response {
-    error_code         = 500
-    response_page_path = "/404.html"
-    response_code      = 500
-    error_caching_min_ttl = 10
-  }
-
 
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
