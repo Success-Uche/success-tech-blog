@@ -51,6 +51,28 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
       function_arn = aws_cloudfront_function.append_index_html.arn
     }
 
+  custom_error_response {
+    error_code         = 403
+    response_page_path = "/404.html"
+    response_code      = 404
+    error_caching_min_ttl = 10
+  }
+
+  custom_error_response {
+    error_code         = 404
+    response_page_path = "/404.html"
+    response_code      = 404
+    error_caching_min_ttl = 10
+  }
+
+  custom_error_response {
+    error_code         = 500
+    response_page_path = "/404.html"
+    response_code      = 500
+    error_caching_min_ttl = 10
+  }
+
+
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 3600
