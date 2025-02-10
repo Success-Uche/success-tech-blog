@@ -3,7 +3,7 @@ baseURL = "https://yourdomain.com"
 defaultContentLanguage = "en"
 # language code
 languageCode = "en"
-title = "SUCCESS_TECH_BLOG"
+title = "Success-TechBlog"
 
 # Change the default theme to be use when building the site with Hugo
 theme = "LoveIt"
@@ -68,7 +68,7 @@ theme = "LoveIt"
         pre = "<i class='fab fa-github fa-fw'></i>"
         post = ""
         name = ""
-        url = "https://yourgithuburl"
+        url = "https://github.com/Success-Uche"
         title = "GitHub"
         weight = 5
 
@@ -142,7 +142,7 @@ theme = "LoveIt"
       # URL of the LOGO
       logo = ""
       # title name
-      name = "SUCCESS_TECH_BLOG"
+      name = "Success-TechBlog"
       # you can add extra information before the name (HTML format is supported), such as icons
       pre = ""
       # you can add extra information after the name (HTML format is supported), such as icons
@@ -196,9 +196,10 @@ theme = "LoveIt"
       # Gravatar Email for preferred avatar in home page
       gravatarEmail = ""
       # URL of avatar shown in home page (LINK_TO_YOUR_PHOTO_BELOW)
-      avatarURL = "https://media.licdn.com/dms/image/v2/D4E03AQFcPNPQec0Dyg/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1727189761569?e=1738800000&v=beta&t=Xh9bk99tSHpDaqKTIUEi5xvRwrsO6nZSocsip9fLSxU"
+      avatarURL = "https://media.licdn.com/dms/image/v2/D4E03AQFcPNPQec0Dyg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1727189761536?e=1744848000&v=beta&t=uP0QtIdIR3vgSEppXVPgykWJX23QSs4vsSW5m5FTuLc"
+
       #  title shown in home page (HTML format is supported)
-      title = "SUCCESS_TECH_BLOG"
+      title = "Success-TechBlog"
       # subtitle shown in home page
       subtitle = "My AWS DevOps Engineering Journey"
       # whether to use typeit animation for subtitle
@@ -219,7 +220,7 @@ theme = "LoveIt"
   # Social config about the author
   [params.social]
     Bitbucket = ""
-    GitHub = ""
+    GitHub = "https://github.com/Success-Uche"
     Linkedin = "https://www.linkedin.com/in/success-uche-348b1032a/"
     Twitter = ""
     Gitlab = ""
@@ -511,7 +512,7 @@ theme = "LoveIt"
 
 # Author config
 [author]
-  name = "SUCCESS_UCHE"
+  name = "Success Uche"
   email = "successuche001@gmail.com"
   link = ""
 
